@@ -96,14 +96,14 @@ void Widget::drawPolygon(const QPolygon &poly, QPainter *p, QColor color) {
 
     if (!poly.isEmpty()) {
         linePath.moveTo(poly.first());
-        int r = distance(mapFromGlobal(QCursor::pos()), poly.first()) <= 2 * circleRadius ? circleRadius + 2 : circleRadius;
-        circlePath.addEllipse(poly.first(), r, r);
+        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()), poly.first()) <= 2 * circleRadius ? 2 : 0;
+        circlePath.addEllipse(poly.first(), circleRadius + d, circleRadius + d);
     }
 
     for (int i = 1; i < poly.size(); i++) {
         linePath.lineTo(poly.at(i));
-        int r = distance(mapFromGlobal(QCursor::pos()), poly.at(i)) <= 2 * circleRadius ? circleRadius + 2 : circleRadius;
-        circlePath.addEllipse(poly.at(i), r, r);
+        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()), poly.at(i)) <= 2 * circleRadius ? 2 : 0;
+        circlePath.addEllipse(poly.at(i), circleRadius + d, circleRadius + d);
     }
 
     if (!poly.isEmpty())
