@@ -8,7 +8,8 @@ class Widget : public QWidget {
     const static int circleRadius = 4;
 
     QPolygon polygon;
-    QPoint *newPoint;
+    QPoint *newPoint, *movedPoint;
+    QColor color;
 
 public:
     Widget(QWidget *parent = 0);
@@ -16,6 +17,7 @@ public:
 
     void timerEvent(QTimerEvent *e);
     void mousePressEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
     void keyPressEvent(QKeyEvent *e);
     void paintEvent(QPaintEvent *e);
@@ -25,4 +27,5 @@ private:
     void drawPolygon(const QPolygon &poly, QPainter *p, QColor color);
     void closePolygon();
     bool isPolygonClockwise(const QPolygon &polygon);
+    void check();
 };

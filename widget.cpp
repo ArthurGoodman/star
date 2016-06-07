@@ -11,6 +11,7 @@ Widget::Widget(QWidget *parent)
     setMouseTracking(true);
 
     newPoint = 0;
+    movedPoint = 0;
 }
 
 Widget::~Widget() {
@@ -23,8 +24,16 @@ void Widget::timerEvent(QTimerEvent *) {
 
 void Widget::mousePressEvent(QMouseEvent *e) {
     if (e->buttons() & Qt::LeftButton) {
-        if (newPoint == 0)
+        if (newPoint == 0) {
+            for (int i = 0; i < polygon.size(); i++)
+                if (distance(polygon[i], e->pos()) <= 2 * circleRadius) {
+                    movedPoint = &polygon[i];
+                    return;
+                }
+
             polygon.clear();
+            color = Qt::blue;
+        }
 
         if (distance(polygon.first(), e->pos()) <= 2 * circleRadius) {
             if (polygon.size() > 2)
@@ -38,8 +47,17 @@ void Widget::mousePressEvent(QMouseEvent *e) {
     }
 }
 
+void Widget::mouseReleaseEvent(QMouseEvent *) {
+    movedPoint = 0;
+}
+
 void Widget::mouseMoveEvent(QMouseEvent *e) {
-    if (newPoint != 0)
+    if (movedPoint != 0) {
+        *movedPoint = e->pos();
+        check();
+    }
+
+    else if (newPoint != 0)
         *newPoint = e->pos();
 }
 
@@ -65,7 +83,7 @@ void Widget::paintEvent(QPaintEvent *) {
 
     p.setRenderHint(QPainter::Antialiasing);
 
-    drawPolygon(polygon, &p, Qt::red);
+    drawPolygon(polygon, &p, color);
 }
 
 double Widget::distance(const QPoint &a, const QPoint &b) {
@@ -78,12 +96,14 @@ void Widget::drawPolygon(const QPolygon &poly, QPainter *p, QColor color) {
 
     if (!poly.isEmpty()) {
         linePath.moveTo(poly.first());
-        circlePath.addEllipse(poly.first(), circleRadius, circleRadius);
+        int r = distance(mapFromGlobal(QCursor::pos()), poly.first()) <= 2 * circleRadius ? circleRadius + 2 : circleRadius;
+        circlePath.addEllipse(poly.first(), r, r);
     }
 
     for (int i = 1; i < poly.size(); i++) {
         linePath.lineTo(poly.at(i));
-        circlePath.addEllipse(poly.at(i), circleRadius, circleRadius);
+        int r = distance(mapFromGlobal(QCursor::pos()), poly.at(i)) <= 2 * circleRadius ? circleRadius + 2 : circleRadius;
+        circlePath.addEllipse(poly.at(i), r, r);
     }
 
     if (!poly.isEmpty())
@@ -109,6 +129,8 @@ void Widget::closePolygon() {
 
     delete newPoint;
     newPoint = 0;
+
+    check();
 }
 
 bool Widget::isPolygonClockwise(const QPolygon &polygon) {
@@ -122,4 +144,8 @@ bool Widget::isPolygonClockwise(const QPolygon &polygon) {
     }
 
     return sum < 0;
+}
+
+void Widget::check() {
+    color = Qt::red;
 }
