@@ -42,7 +42,7 @@ void Widget::mousePressEvent(QMouseEvent *e) {
             polygon.append(e->pos());
 
             if (polygon.size() == 1)
-                newPoint = new QPoint(e->pos());
+                newPoint = new QPointF(e->pos());
         }
     }
 }
@@ -86,11 +86,11 @@ void Widget::paintEvent(QPaintEvent *) {
     drawPolygon(polygon, &p, color);
 }
 
-double Widget::distance(const QPoint &a, const QPoint &b) {
+double Widget::distance(const QPointF &a, const QPointF &b) {
     return std::sqrt(std::pow(a.x() - b.x(), 2) + std::pow(a.y() - b.y(), 2));
 }
 
-void Widget::drawPolygon(const QPolygon &poly, QPainter *p, QColor color) {
+void Widget::drawPolygon(const QPolygonF &poly, QPainter *p, QColor color) {
     QPainterPath linePath, circlePath;
     circlePath.setFillRule(Qt::WindingFill);
 
@@ -115,30 +115,45 @@ void Widget::drawPolygon(const QPolygon &poly, QPainter *p, QColor color) {
     p->strokePath(linePath, QPen(color, 2));
     p->fillPath(circlePath, color.lighter());
     p->strokePath(circlePath, QPen(Qt::black, 1));
+
+    if (newPoint == 0)
+        for (int i = 0; i < poly.size(); i++) {
+            QPointF a = poly[i], b = poly[(i + 1) % poly.size()];
+            QPointF o = (a + b) / 2;
+            drawArrow(o, normal(b - a), p);
+        }
+}
+
+void Widget::drawArrow(const QPointF &o, const QPointF &v, QPainter *p) {
+    QPointF end = o + v * normalLength;
+    QPointF norm = normal(v);
+
+    p->setPen(normalColor);
+    p->drawLine(o, end);
+
+    QPainterPath path;
+    path.setFillRule(Qt::WindingFill);
+
+    path.moveTo(end);
+    path.lineTo(end - v * normalLength / 3 + norm * normalLength / 4);
+    path.lineTo(end - v * normalLength / 3 - norm * normalLength / 4);
+
+    p->fillPath(path, normalColor);
 }
 
 void Widget::closePolygon() {
-    if (!isPolygonClockwise(polygon)) {
-        QPolygon reversed;
-
-        for (int i = polygon.size() - 1; i >= 0; i--)
-            reversed.append(polygon[i]);
-
-        polygon = reversed;
-    }
-
     delete newPoint;
     newPoint = 0;
 
     check();
 }
 
-bool Widget::isPolygonClockwise(const QPolygon &polygon) {
+bool Widget::isPolygonClockwise(const QPolygonF &polygon) {
     int sum = 0;
 
     for (int i = 0; i < polygon.size(); i++) {
-        QPoint a = polygon[i];
-        QPoint b = polygon[(i + 1) % polygon.size()];
+        QPointF a = polygon[i];
+        QPointF b = polygon[(i + 1) % polygon.size()];
 
         sum += (b.x() - a.x()) * (b.y() + a.y());
     }
@@ -147,5 +162,31 @@ bool Widget::isPolygonClockwise(const QPolygon &polygon) {
 }
 
 void Widget::check() {
+    if (!isPolygonClockwise(polygon)) {
+        int movedIndex = -1;
+
+        if (movedPoint != 0)
+            movedIndex = polygon.indexOf(*movedPoint);
+
+        QPolygonF reversed;
+
+        for (int i = polygon.size() - 1; i >= 0; i--)
+            reversed.append(polygon[i]);
+
+        polygon = reversed;
+
+        if (movedIndex != -1)
+            movedPoint = &polygon[polygon.size() - 1 - movedIndex];
+    }
+
     color = Qt::red;
+}
+
+QPointF Widget::normal(const QPointF &v) {
+    return normalized(QPointF(-v.y(), v.x()));
+}
+
+QPointF Widget::normalized(const QPointF &v) {
+    double len = distance(QPointF(), v);
+    return v / len;
 }

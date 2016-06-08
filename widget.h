@@ -6,9 +6,11 @@ class Widget : public QWidget {
     Q_OBJECT
 
     const static int circleRadius = 4;
+    const static int normalLength = 12;
+    const static Qt::GlobalColor normalColor = Qt::darkGray;
 
-    QPolygon polygon;
-    QPoint *newPoint, *movedPoint;
+    QPolygonF polygon;
+    QPointF *newPoint, *movedPoint;
     QColor color;
 
 public:
@@ -23,9 +25,12 @@ public:
     void paintEvent(QPaintEvent *e);
 
 private:
-    double distance(const QPoint &a, const QPoint &b);
-    void drawPolygon(const QPolygon &poly, QPainter *p, QColor color);
+    double distance(const QPointF &a, const QPointF &b);
+    void drawPolygon(const QPolygonF &poly, QPainter *p, QColor color);
+    void drawArrow(const QPointF &o, const QPointF &v, QPainter *p);
     void closePolygon();
-    bool isPolygonClockwise(const QPolygon &polygon);
+    bool isPolygonClockwise(const QPolygonF &polygon);
     void check();
+    QPointF normal(const QPointF &v);
+    QPointF normalized(const QPointF &v);
 };
