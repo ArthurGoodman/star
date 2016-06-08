@@ -7,7 +7,9 @@ TEMPLATE = app
 
 SOURCES += \
     main.cpp \
-    widget.cpp
+    widget.cpp \
+    constraint.cpp
 
 HEADERS += \
-    widget.h
+    widget.h \
+    constraint.h

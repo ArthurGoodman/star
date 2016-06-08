@@ -2,6 +2,8 @@
 
 #include <QtWidgets>
 
+#include "constraint.h"
+
 class Widget : public QWidget {
     Q_OBJECT
 
@@ -28,9 +30,9 @@ private:
     double distance(const QPointF &a, const QPointF &b);
     void drawPolygon(QPainter *p, QColor color);
     void drawArrow(const QPointF &o, const QPointF &v, QPainter *p);
-    void closePolygon();
     bool isPolygonClockwise();
     void check();
+    QPointF reduceLP(QVector<Constraint> H);
     QPointF normal(const QPointF &v);
     QPointF normalized(const QPointF &v);
 };

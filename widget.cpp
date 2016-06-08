@@ -10,6 +10,8 @@ Widget::Widget(QWidget *parent)
 
     setMouseTracking(true);
 
+    qsrand(QTime::currentTime().msec());
+
     newPoint = 0;
     movedPoint = 0;
 }
@@ -36,10 +38,14 @@ void Widget::mousePressEvent(QMouseEvent *e) {
         }
 
         if (distance(polygon.first(), e->pos()) <= 2 * circleRadius) {
-            if (polygon.size() > 2)
-                closePolygon();
+            if (polygon.size() > 2) {
+                delete newPoint;
+                newPoint = 0;
+
+                check();
+            }
         } else {
-            polygon.append(e->pos());
+            polygon << e->pos();
 
             if (polygon.size() == 1)
                 newPoint = new QPointF(e->pos());
@@ -55,9 +61,7 @@ void Widget::mouseMoveEvent(QMouseEvent *e) {
     if (movedPoint != 0) {
         *movedPoint = e->pos();
         check();
-    }
-
-    else if (newPoint != 0)
+    } else if (newPoint != 0)
         *newPoint = e->pos();
 }
 
@@ -101,9 +105,9 @@ void Widget::drawPolygon(QPainter *p, QColor color) {
     }
 
     for (int i = 1; i < polygon.size(); i++) {
-        linePath.lineTo(polygon.at(i));
-        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()), polygon.at(i)) <= 2 * circleRadius ? 2 : 0;
-        circlePath.addEllipse(polygon.at(i), circleRadius + d, circleRadius + d);
+        linePath.lineTo(polygon[i]);
+        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()), polygon[i]) <= 2 * circleRadius ? 2 : 0;
+        circlePath.addEllipse(polygon[i], circleRadius + d, circleRadius + d);
     }
 
     if (!polygon.isEmpty())
@@ -141,13 +145,6 @@ void Widget::drawArrow(const QPointF &o, const QPointF &v, QPainter *p) {
     p->fillPath(path, normalColor);
 }
 
-void Widget::closePolygon() {
-    delete newPoint;
-    newPoint = 0;
-
-    check();
-}
-
 bool Widget::isPolygonClockwise() {
     int sum = 0;
 
@@ -169,7 +166,7 @@ void Widget::check() {
         QPolygonF reversed;
 
         for (int i = polygon.size() - 1; i >= 0; i--)
-            reversed.append(polygon[i]);
+            reversed << polygon[i];
 
         polygon = reversed;
 
@@ -177,7 +174,65 @@ void Widget::check() {
             movedPoint = &polygon[polygon.size() - 1 - movedIndex];
     }
 
-    color = Qt::red;
+    color = Qt::darkGreen;
+
+    QVector<Constraint> H;
+
+    for (int i = 0; i < polygon.size(); i++)
+        H << Constraint(polygon[i], polygon[(i + 1) % polygon.size()]);
+
+    try {
+        reduceLP(H);
+    } catch (...) {
+        color = Qt::red;
+    }
+}
+
+QPointF Widget::reduceLP(QVector<Constraint> H) {
+    if (H.size() == 2) {
+        return H[0].intersect(H[1]);
+    }
+
+    int i = qrand() % H.size();
+    Constraint h = H[i];
+
+    QVector<Constraint> G(H);
+    G.remove(i);
+
+    QPointF x = reduceLP(G);
+
+    if (h.isViolatedBy(x)) {
+        QPointF a = h.intersect(G[0]), b = QPointF();
+        int ai = 0;
+
+        for (int i = 1; i < G.size(); i++) {
+            x = h.intersect(G[i]);
+
+            if (b.isNull()) {
+                if (G[i].isViolatedBy(a)) {
+                    if (G[ai].isViolatedBy(x))
+                        throw 0;
+                    else {
+                        a = x;
+                        ai = i;
+                    }
+                } else if (!G[ai].isViolatedBy(x))
+                    b = x;
+            } else {
+                if (G[i].isViolatedBy(a)) {
+                    if (G[i].isViolatedBy(b))
+                        throw 0;
+                    else
+                        a = x;
+                } else if (G[i].isViolatedBy(b))
+                    b = x;
+            }
+        }
+
+        x = a;
+    }
+
+    return x;
 }
 
 QPointF Widget::normal(const QPointF &v) {
