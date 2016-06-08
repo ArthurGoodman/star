@@ -83,31 +83,31 @@ void Widget::paintEvent(QPaintEvent *) {
 
     p.setRenderHint(QPainter::Antialiasing);
 
-    drawPolygon(polygon, &p, color);
+    drawPolygon(&p, color);
 }
 
 double Widget::distance(const QPointF &a, const QPointF &b) {
     return std::sqrt(std::pow(a.x() - b.x(), 2) + std::pow(a.y() - b.y(), 2));
 }
 
-void Widget::drawPolygon(const QPolygonF &poly, QPainter *p, QColor color) {
+void Widget::drawPolygon(QPainter *p, QColor color) {
     QPainterPath linePath, circlePath;
     circlePath.setFillRule(Qt::WindingFill);
 
-    if (!poly.isEmpty()) {
-        linePath.moveTo(poly.first());
-        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()), poly.first()) <= 2 * circleRadius ? 2 : 0;
-        circlePath.addEllipse(poly.first(), circleRadius + d, circleRadius + d);
+    if (!polygon.isEmpty()) {
+        linePath.moveTo(polygon.first());
+        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()), polygon.first()) <= 2 * circleRadius ? 2 : 0;
+        circlePath.addEllipse(polygon.first(), circleRadius + d, circleRadius + d);
     }
 
-    for (int i = 1; i < poly.size(); i++) {
-        linePath.lineTo(poly.at(i));
-        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()), poly.at(i)) <= 2 * circleRadius ? 2 : 0;
-        circlePath.addEllipse(poly.at(i), circleRadius + d, circleRadius + d);
+    for (int i = 1; i < polygon.size(); i++) {
+        linePath.lineTo(polygon.at(i));
+        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()), polygon.at(i)) <= 2 * circleRadius ? 2 : 0;
+        circlePath.addEllipse(polygon.at(i), circleRadius + d, circleRadius + d);
     }
 
-    if (!poly.isEmpty())
-        linePath.lineTo(newPoint ? *newPoint : poly.first());
+    if (!polygon.isEmpty())
+        linePath.lineTo(newPoint ? *newPoint : polygon.first());
 
     if (newPoint != 0)
         circlePath.addEllipse(*newPoint, circleRadius, circleRadius);
@@ -117,8 +117,8 @@ void Widget::drawPolygon(const QPolygonF &poly, QPainter *p, QColor color) {
     p->strokePath(circlePath, QPen(Qt::black, 1));
 
     if (newPoint == 0)
-        for (int i = 0; i < poly.size(); i++) {
-            QPointF a = poly[i], b = poly[(i + 1) % poly.size()];
+        for (int i = 0; i < polygon.size(); i++) {
+            QPointF a = polygon[i], b = polygon[(i + 1) % polygon.size()];
             QPointF o = (a + b) / 2;
             drawArrow(o, normal(b - a), p);
         }
@@ -148,13 +148,11 @@ void Widget::closePolygon() {
     check();
 }
 
-bool Widget::isPolygonClockwise(const QPolygonF &polygon) {
+bool Widget::isPolygonClockwise() {
     int sum = 0;
 
     for (int i = 0; i < polygon.size(); i++) {
-        QPointF a = polygon[i];
-        QPointF b = polygon[(i + 1) % polygon.size()];
-
+        QPointF a = polygon[i], b = polygon[(i + 1) % polygon.size()];
         sum += (b.x() - a.x()) * (b.y() + a.y());
     }
 
@@ -162,7 +160,7 @@ bool Widget::isPolygonClockwise(const QPolygonF &polygon) {
 }
 
 void Widget::check() {
-    if (!isPolygonClockwise(polygon)) {
+    if (!isPolygonClockwise()) {
         int movedIndex = -1;
 
         if (movedPoint != 0)
@@ -187,6 +185,5 @@ QPointF Widget::normal(const QPointF &v) {
 }
 
 QPointF Widget::normalized(const QPointF &v) {
-    double len = distance(QPointF(), v);
-    return v / len;
+    return v / distance(QPointF(), v);
 }

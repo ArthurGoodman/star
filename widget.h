@@ -26,10 +26,10 @@ public:
 
 private:
     double distance(const QPointF &a, const QPointF &b);
-    void drawPolygon(const QPolygonF &poly, QPainter *p, QColor color);
+    void drawPolygon(QPainter *p, QColor color);
     void drawArrow(const QPointF &o, const QPointF &v, QPainter *p);
     void closePolygon();
-    bool isPolygonClockwise(const QPolygonF &polygon);
+    bool isPolygonClockwise();
     void check();
     QPointF normal(const QPointF &v);
     QPointF normalized(const QPointF &v);
