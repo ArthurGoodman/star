@@ -17,6 +17,8 @@ class Widget : public QWidget {
 
     bool antialiasing, normals;
 
+    QPoint offset, lastPos;
+
 public:
     Widget(QWidget *parent = 0);
     ~Widget();

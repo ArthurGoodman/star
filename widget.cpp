@@ -28,10 +28,10 @@ void Widget::timerEvent(QTimerEvent *) {
 }
 
 void Widget::mousePressEvent(QMouseEvent *e) {
-    if (e->buttons() & Qt::LeftButton) {
+    if (e->button() == Qt::LeftButton) {
         if (newPoint == 0) {
             for (int i = 0; i < polygon.size(); i++)
-                if (distance(polygon[i], e->pos()) <= 2 * circleRadius) {
+                if (distance(polygon[i], e->pos() - offset) <= 2 * circleRadius) {
                     movedPoint = &polygon[i];
                     return;
                 }
@@ -40,7 +40,7 @@ void Widget::mousePressEvent(QMouseEvent *e) {
             color = Qt::blue;
         }
 
-        if (distance(polygon.first(), e->pos()) <= 2 * circleRadius) {
+        if (distance(polygon.first(), e->pos() - offset) <= 2 * circleRadius) {
             if (polygon.size() > 2) {
                 delete newPoint;
                 newPoint = 0;
@@ -48,24 +48,33 @@ void Widget::mousePressEvent(QMouseEvent *e) {
                 check();
             }
         } else {
-            polygon << e->pos();
+            polygon << e->pos() - offset;
 
             if (polygon.size() == 1)
-                newPoint = new QPointF(e->pos());
+                newPoint = new QPointF(e->pos() - offset);
         }
     }
+
+    lastPos = e->pos();
 }
 
-void Widget::mouseReleaseEvent(QMouseEvent *) {
-    movedPoint = 0;
+void Widget::mouseReleaseEvent(QMouseEvent *e) {
+    if (e->button() == Qt::LeftButton)
+        movedPoint = 0;
 }
 
 void Widget::mouseMoveEvent(QMouseEvent *e) {
-    if (movedPoint != 0) {
-        *movedPoint = e->pos();
-        check();
-    } else if (newPoint != 0)
-        *newPoint = e->pos();
+    if (e->buttons() & Qt::RightButton)
+        offset += e->pos() - lastPos;
+    else {
+        if (movedPoint != 0) {
+            *movedPoint = e->pos() - offset;
+            check();
+        } else if (newPoint != 0)
+            *newPoint = e->pos() - offset;
+    }
+
+    lastPos = e->pos();
 }
 
 void Widget::keyPressEvent(QKeyEvent *e) {
@@ -79,6 +88,9 @@ void Widget::keyPressEvent(QKeyEvent *e) {
         break;
 
     case Qt::Key_Backspace:
+        newPoint = 0;
+        movedPoint = 0;
+        offset = QPoint();
         polygon.clear();
         break;
 
@@ -96,6 +108,8 @@ void Widget::paintEvent(QPaintEvent *) {
     QPainter p(this);
     p.fillRect(rect(), Qt::lightGray);
 
+    p.translate(offset);
+
     if (antialiasing)
         p.setRenderHint(QPainter::Antialiasing);
 
@@ -112,13 +126,13 @@ void Widget::drawPolygon(QPainter *p, QColor color) {
 
     if (!polygon.isEmpty()) {
         linePath.moveTo(polygon.first());
-        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()), polygon.first()) <= 2 * circleRadius ? 2 : 0;
+        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()) - offset, polygon.first()) <= 2 * circleRadius ? 2 : 0;
         circlePath.addEllipse(polygon.first(), circleRadius + d, circleRadius + d);
     }
 
     for (int i = 1; i < polygon.size(); i++) {
         linePath.lineTo(polygon[i]);
-        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()), polygon[i]) <= 2 * circleRadius ? 2 : 0;
+        int d = newPoint == 0 && distance(mapFromGlobal(QCursor::pos()) - offset, polygon[i]) <= 2 * circleRadius ? 2 : 0;
         circlePath.addEllipse(polygon[i], circleRadius + d, circleRadius + d);
     }
 
