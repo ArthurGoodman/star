@@ -14,6 +14,9 @@ Widget::Widget(QWidget *parent)
 
     newPoint = 0;
     movedPoint = 0;
+
+    antialiasing = true;
+    normals = true;
 }
 
 Widget::~Widget() {
@@ -78,6 +81,14 @@ void Widget::keyPressEvent(QKeyEvent *e) {
     case Qt::Key_Backspace:
         polygon.clear();
         break;
+
+    case Qt::Key_A:
+        antialiasing = !antialiasing;
+        break;
+
+    case Qt::Key_N:
+        normals = !normals;
+        break;
     }
 }
 
@@ -85,7 +96,8 @@ void Widget::paintEvent(QPaintEvent *) {
     QPainter p(this);
     p.fillRect(rect(), Qt::lightGray);
 
-    p.setRenderHint(QPainter::Antialiasing);
+    if (antialiasing)
+        p.setRenderHint(QPainter::Antialiasing);
 
     drawPolygon(&p, color);
 }
@@ -120,7 +132,7 @@ void Widget::drawPolygon(QPainter *p, QColor color) {
     p->fillPath(circlePath, color.lighter());
     p->strokePath(circlePath, QPen(Qt::black, 1));
 
-    if (newPoint == 0)
+    if (newPoint == 0 && normals)
         for (int i = 0; i < polygon.size(); i++) {
             QPointF a = polygon[i], b = polygon[(i + 1) % polygon.size()];
             QPointF o = (a + b) / 2;

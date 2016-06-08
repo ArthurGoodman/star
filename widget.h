@@ -15,6 +15,8 @@ class Widget : public QWidget {
     QPointF *newPoint, *movedPoint;
     QColor color;
 
+    bool antialiasing, normals;
+
 public:
     Widget(QWidget *parent = 0);
     ~Widget();
