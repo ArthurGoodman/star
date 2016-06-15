@@ -13,6 +13,18 @@ bool Constraint::isViolatedBy(const QPointF &x) {
 }
 
 QPointF Constraint::intersect(const Constraint &other) {
-    double a = -this->a.x() / this->a.y(), b = -other.a.x() / other.a.y(), c = -this->b / this->a.y(), d = -other.b / other.a.y();
-    return QPointF((d - c) / (a - b), (a * d - b * c) / (a - b));
+    static const double epsilon = 1e-6;
+
+    double p = -a.x() / a.y(), q = -other.a.x() / other.a.y(), r = -b / a.y(), s = -other.b / other.a.y();
+
+    if (fabs(a.y()) < epsilon)
+        return QPointF(-b / a.x(), -other.a.x() / other.a.y() * (-b / a.x()) - other.b / other.a.y());
+
+    if (fabs(other.a.y()) < epsilon)
+        return QPointF(-other.b / other.a.x(), -a.x() / a.y() * (-other.b / other.a.x()) - b / a.y());
+
+    if (fabs(p - q) < epsilon)
+        return QPointF(0, -b / a.y());
+
+    return QPointF((s - r) / (p - q), (p * s - q * r) / (p - q));
 }
