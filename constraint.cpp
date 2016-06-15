@@ -24,7 +24,7 @@ QPointF Constraint::intersect(const Constraint &other) {
         return QPointF(-other.b / other.a.x(), -a.x() / a.y() * (-other.b / other.a.x()) - b / a.y());
 
     if (fabs(p - q) < epsilon)
-        return QPointF(0, -b / a.y());
+        return QPointF(-b / a.x(), 0);
 
     return QPointF((s - r) / (p - q), (p * s - q * r) / (p - q));
 }
