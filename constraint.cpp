@@ -17,14 +17,14 @@ QPointF Constraint::intersect(const Constraint &other) {
 
     double p = -a.x() / a.y(), q = -other.a.x() / other.a.y(), r = -b / a.y(), s = -other.b / other.a.y();
 
+    if ((fabs(a.y()) < epsilon && fabs(other.a.y()) < epsilon) || fabs(p - q) < epsilon)
+        return QPointF(-b / a.x(), 1);
+
     if (fabs(a.y()) < epsilon)
         return QPointF(-b / a.x(), -other.a.x() / other.a.y() * (-b / a.x()) - other.b / other.a.y());
 
     if (fabs(other.a.y()) < epsilon)
         return QPointF(-other.b / other.a.x(), -a.x() / a.y() * (-other.b / other.a.x()) - b / a.y());
-
-    if (fabs(p - q) < epsilon)
-        return QPointF(-b / a.x(), 0);
 
     return QPointF((s - r) / (p - q), (p * s - q * r) / (p - q));
 }
